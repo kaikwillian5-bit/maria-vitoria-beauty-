@@ -34,6 +34,10 @@
 --ring:rgba(67,42,21,.15);
 --btn-shadow:rgba(67,42,21,.5);
 --nav-shadow:rgba(67,42,21,.55);
+--holiday-bg:#F9E8E0;
+--holiday-soft:#FCF3EE;
+--holiday-line:#EBCBBD;
+--holiday-ink:#9C3F2A;
 color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -58,6 +62,10 @@ color-scheme:dark;
 --ring:rgba(207,159,104,.28);
 --btn-shadow:rgba(0,0,0,.5);
 --nav-shadow:rgba(0,0,0,.5);
+--holiday-bg:#35201A;
+--holiday-soft:#2A1D18;
+--holiday-line:#5A3427;
+--holiday-ink:#F2A58E;
 }
 *{box-sizing:border-box;}
 body{
@@ -142,6 +150,22 @@ select{-webkit-appearance:none;appearance:none;background-image:url("data:image/
 input:focus, select:focus, textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--ring);}
 textarea{resize:vertical;min-height:60px;}
 .field{margin-bottom:4px;}
+.date-notice{margin:6px 2px 0;font-size:12.5px;font-weight:500;color:var(--holiday-ink);}
+.holiday-note{margin:0 0 14px;padding:10px 14px;border-radius:9px;background:var(--holiday-bg);border:1px solid var(--holiday-line);color:var(--holiday-ink);font-size:14px;font-weight:500;}
+.cal-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 2px 0;font-size:12px;color:var(--ink-soft);}
+.cal-legend span{display:inline-flex;align-items:center;gap:6px;}
+.cal-legend i{width:12px;height:12px;border-radius:3px;border:1px solid var(--holiday-line);background:var(--holiday-bg);display:inline-block;}
+.cal-legend i.opt{background:var(--holiday-soft);border-style:dashed;}
+.maint-block{margin-top:16px;padding:14px 16px;border:1.5px dashed var(--line);border-radius:10px;background:var(--blush-soft);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.chip{position:relative;display:inline-flex;margin:0;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);cursor:pointer;}
+.chip input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;min-height:0;padding:0;border:0;}
+.chip span{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border:1.5px solid var(--line);border-radius:999px;background:var(--field);font-weight:500;transition:background .2s ease,border-color .2s ease;}
+.chip:hover span{border-color:var(--primary);}
+.chip input:checked + span{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+.chip input:focus-visible + span{box-shadow:0 0 0 3px var(--ring);}
+.maint-preview{margin:10px 2px 0;font-size:13.5px;color:var(--ink-soft);}
+.maint-preview.warn{color:var(--holiday-ink);font-weight:500;}
 .btn{
 display:inline-flex;align-items:center;gap:8px;justify-content:center;
 border:none;border-radius:999px;padding:13px 26px;font-family:'Josefin Sans',sans-serif;
@@ -168,6 +192,12 @@ transition:border-color .2s ease, background .2s ease;overflow:hidden;min-width:
 }
 .cal-day:hover{border-color:var(--primary);}
 .cal-day.blank{background:transparent;border-color:transparent;cursor:default;}
+.cal-day.holiday{background:var(--holiday-bg);border-color:var(--holiday-line);}
+.cal-day.holiday.optional{background:var(--holiday-soft);border-style:dashed;}
+.cal-day.holiday .cal-num{color:var(--holiday-ink);}
+.cal-day.holiday.today .cal-num{color:var(--on-primary);}
+.cal-holiday{font-size:10.5px;line-height:1.2;font-weight:600;color:var(--holiday-ink);}
+.cal-day.optional .cal-holiday{font-weight:500;}
 .cal-day.today .cal-num{background:var(--primary);color:var(--on-primary);}
 .cal-day.selected{border-color:var(--primary);background:var(--blush-soft);box-shadow:0 0 0 1.5px var(--primary);}
 .cal-num{align-self:flex-start;min-width:24px;height:24px;padding:0 6px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;}
@@ -215,6 +245,9 @@ transition:all .3s ease;z-index:100;
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 @media (max-width:640px){
 .cal-grid,.cal-weekdays{gap:3px;}
+.cal-holiday{display:none;}
+.cal-day.holiday::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--holiday-ink);margin-top:1px;}
+.cal-day.optional::after{background:transparent;border:1.5px solid var(--holiday-ink);box-sizing:border-box;}
 .cal-day{min-height:54px;padding:5px 3px;align-items:center;}
 .cal-chip,.cal-more{display:none;}
 .cal-dots{display:block;font-size:10.5px;font-weight:600;color:var(--on-primary);background:var(--accent-gold);border-radius:9px;padding:1px 7px;}
@@ -292,10 +325,12 @@ nav{flex:1;min-width:0;}
 </div>
 <div class="cal-weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
 <div class="cal-grid" id="calGrid"></div>
+<div class="cal-legend"><span><i></i> Feriado nacional</span><span><i class="opt"></i> Ponto facultativo (Carnaval, Corpus Christi)</span></div>
 </div>
 <div class="card" id="dayDetail">
 <h2 class="detail-title" id="dayDetailTitle"></h2>
 <p class="hint" id="dayDetailHint"></p>
+<div class="holiday-note" id="dayHolidayNote" style="display:none;"></div>
 <div id="agendaList"></div>
 </div>
 </section>
@@ -328,11 +363,21 @@ nav{flex:1;min-width:0;}
 <input type="date" id="apptDate" tabindex="-1" aria-label="Abrir calendário">
 </span>
 </div>
+<p class="date-notice" id="apptDateNotice" hidden></p>
 </div>
 <div class="field">
 <label>Horário</label>
 <input type="time" id="apptTime" required>
 </div>
+</div>
+<div class="maint-block" id="maintBlock" style="display:none;">
+<label id="maintLabel">Manutenção</label>
+<div class="chips" role="radiogroup" aria-labelledby="maintLabel">
+<label class="chip"><input type="radio" name="maint" value="15"><span>Em 15 dias</span></label>
+<label class="chip"><input type="radio" name="maint" value="20"><span>Em 20 dias</span></label>
+<label class="chip"><input type="radio" name="maint" value="0"><span>Não marcar agora</span></label>
+</div>
+<p class="maint-preview" id="maintPreview"></p>
 </div>
 <div class="divider"></div>
 <button type="submit" class="btn btn-primary">Confirmar marcação</button>
@@ -349,7 +394,7 @@ nav{flex:1;min-width:0;}
 <div class="grid">
 <div class="field">
 <label>Nome do serviço</label>
-<input type="text" id="svcName" required placeholder="Ex: Manicure">
+<input type="text" id="svcName" required placeholder="Ex: Alongamento de cílios">
 </div>
 <div class="field">
 <label>Duração (min)</label>
@@ -358,6 +403,10 @@ nav{flex:1;min-width:0;}
 <div class="field">
 <label>Valor (R$)</label>
 <input type="number" id="svcPrice" required min="0" step="0.01" placeholder="80.00">
+</div>
+<div class="field">
+<label>Manutenção (opcional)</label>
+<select id="svcMaint"><option value="">Sem manutenção</option></select>
 </div>
 </div>
 <button type="submit" class="btn btn-primary" style="margin-top:16px;" id="svcSubmitBtn">Adicionar serviço</button>
@@ -457,13 +506,63 @@ if(btn.dataset.tab==='mensagem') loadTemplate();
 });
 });
 
+/* ---------- Feriados nacionais ---------- */
+const holidayCache = {};
+
+function easterSunday(y){            // algoritmo de Meeus/Jones/Butcher
+const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3);
+const h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451);
+const month=Math.floor((h+l-7*m+114)/31), day=((h+l-7*m+114)%31)+1;
+return new Date(y, month-1, day);
+}
+function isoOfDate(d){ return isoFrom(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addDaysISO(iso, n){
+const [y,m,d] = iso.split('-').map(Number);
+return isoOfDate(new Date(y, m-1, d+n));
+}
+function holidaysOfYear(y){
+if(holidayCache[y]) return holidayCache[y];
+const map = {};
+const add = (iso, name, tipo)=>{ map[iso] = { name, tipo }; };
+[['01-01','Confraternização Universal'],['04-21','Tiradentes'],['05-01','Dia do Trabalho'],
+['09-07','Independência do Brasil'],['10-12','Nossa Senhora Aparecida'],['11-02','Finados'],
+['11-15','Proclamação da República'],['12-25','Natal']].forEach(([md,name])=> add(y+'-'+md, name, 'feriado'));
+if(y >= 2024) add(y+'-11-20', 'Dia da Consciência Negra', 'feriado');   // feriado nacional desde 2024
+const pascoa = easterSunday(y);
+add(addDaysISO(isoOfDate(pascoa), -2), 'Sexta-feira Santa', 'feriado');
+add(addDaysISO(isoOfDate(pascoa), -48), 'Carnaval', 'facultativo');
+add(addDaysISO(isoOfDate(pascoa), -47), 'Carnaval', 'facultativo');
+add(addDaysISO(isoOfDate(pascoa), 60), 'Corpus Christi', 'facultativo');
+holidayCache[y] = map;
+return map;
+}
+function holidayOf(iso){
+if(!iso) return null;
+return holidaysOfYear(parseInt(iso.slice(0,4), 10))[iso] || null;
+}
+function holidayKind(h){ return h.tipo === 'feriado' ? 'feriado nacional' : 'ponto facultativo'; }
+
 /* ---------- Serviços ---------- */
 const svcForm = document.getElementById('svcForm');
 const svcGrid = document.getElementById('svcGrid');
 const svcSubmitBtn = document.getElementById('svcSubmitBtn');
 const svcCancelEdit = document.getElementById('svcCancelEdit');
 
+const svcMaint = document.getElementById('svcMaint');
+function populateMaintSelect(){
+const atual = svcMaint.value;
+svcMaint.innerHTML = '<option value="">Sem manutenção</option>';
+state.services.filter(s=>s.id!==editingServiceId).forEach(s=>{
+const opt = document.createElement('option');
+opt.value = s.id;
+opt.textContent = s.name;
+svcMaint.appendChild(opt);
+});
+svcMaint.value = state.services.some(s=>s.id===atual && s.id!==editingServiceId) ? atual : '';
+}
+
 function renderServices(){
+populateMaintSelect();
 svcGrid.innerHTML = '';
 if(state.services.length===0){
 svcGrid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
@@ -472,11 +571,13 @@ svcGrid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
 return;
 }
 state.services.forEach(s=>{
+const manut = s.maintenanceId ? state.services.find(x=>x.id===s.maintenanceId) : null;
 const card = document.createElement('div');
 card.className = 'svc-card';
 card.innerHTML = `
 <div class="name">${escapeHtml(s.name)}</div>
 <div class="meta"><span>⏱ ${s.duration} min</span><span>· ${fmtMoney(s.price)}</span></div>
+${manut ? `<div class="meta" style="margin-top:4px;"><span>↻ Manutenção: ${escapeHtml(manut.name)}</span></div>` : ''}
 <div class="svc-actions">
 <button data-action="edit" data-id="${s.id}">Editar</button>
 <button data-action="delete" data-id="${s.id}">Excluir</button>
@@ -491,8 +592,10 @@ if(!btn) return;
 const id = btn.dataset.id;
 if(btn.dataset.action==='delete'){
 state.services = state.services.filter(s=>s.id!==id);
+state.services.forEach(s=>{ if(s.maintenanceId===id) s.maintenanceId = null; });
 await saveData();
 renderServices();
+populateServiceSelect();
 toast('Serviço removido.');
 } else if(btn.dataset.action==='edit'){
 const s = state.services.find(s=>s.id===id);
@@ -501,6 +604,8 @@ document.getElementById('svcName').value = s.name;
 document.getElementById('svcDuration').value = s.duration;
 document.getElementById('svcPrice').value = s.price;
 editingServiceId = id;
+populateMaintSelect();
+svcMaint.value = s.maintenanceId || '';
 svcSubmitBtn.textContent = 'Salvar alterações';
 svcCancelEdit.style.display = 'inline-flex';
 window.scrollTo({top:0, behavior:'smooth'});
@@ -510,6 +615,7 @@ window.scrollTo({top:0, behavior:'smooth'});
 svcCancelEdit.addEventListener('click', ()=>{
 editingServiceId = null;
 svcForm.reset();
+populateMaintSelect();
 svcSubmitBtn.textContent = 'Adicionar serviço';
 svcCancelEdit.style.display = 'none';
 });
@@ -520,16 +626,17 @@ const name = document.getElementById('svcName').value.trim();
 const duration = parseInt(document.getElementById('svcDuration').value, 10);
 const price = parseFloat(document.getElementById('svcPrice').value);
 if(!name || !duration || isNaN(price)) return;
+const maintenanceId = svcMaint.value || null;
 
 if(editingServiceId){
 const s = state.services.find(s=>s.id===editingServiceId);
-s.name = name; s.duration = duration; s.price = price;
+s.name = name; s.duration = duration; s.price = price; s.maintenanceId = maintenanceId;
 toast('Serviço atualizado.');
 editingServiceId = null;
 svcSubmitBtn.textContent = 'Adicionar serviço';
 svcCancelEdit.style.display = 'none';
 } else {
-state.services.push({ id: uid(), name, duration, price });
+state.services.push({ id: uid(), name, duration, price, maintenanceId });
 toast('Serviço adicionado.');
 }
 svcForm.reset();
@@ -546,6 +653,7 @@ function populateServiceSelect(){
 apptServiceSelect.innerHTML = '';
 if(state.services.length===0){
 apptServiceSelect.innerHTML = '<option value="">Cadastre um serviço primeiro</option>';
+updateMaintBlock();
 return;
 }
 state.services.forEach(s=>{
@@ -554,7 +662,60 @@ opt.value = s.id;
 opt.textContent = `${s.name} — ${fmtMoney(s.price)} (${s.duration} min)`;
 apptServiceSelect.appendChild(opt);
 });
+updateMaintBlock();
 }
+
+const maintBlock = document.getElementById('maintBlock');
+const maintPreview = document.getElementById('maintPreview');
+const maintLabel = document.getElementById('maintLabel');
+const apptDateNotice = document.getElementById('apptDateNotice');
+const apptTimeInput = document.getElementById('apptTime');
+
+function selectedMaint(){
+const r = document.querySelector('input[name="maint"]:checked');
+return r ? r.value : null;
+}
+function weekdayName(iso){
+const [y,m,d] = iso.split('-').map(Number);
+const nome = new Date(y, m-1, d).toLocaleDateString('pt-BR', { weekday:'long' });
+return nome.charAt(0).toUpperCase() + nome.slice(1);
+}
+function updateDateNotice(){
+const h = holidayOf(apptDateInput.value);
+apptDateNotice.hidden = !h;
+if(h) apptDateNotice.textContent = (h.tipo === 'feriado' ? 'Feriado nacional: ' : 'Ponto facultativo: ') + h.name + '. Confirme antes de marcar.';
+}
+function updateMaintBlock(){
+const svc = state.services.find(s=>s.id===apptServiceSelect.value);
+const maintSvc = svc && svc.maintenanceId ? state.services.find(s=>s.id===svc.maintenanceId) : null;
+if(!maintSvc){
+maintBlock.style.display = 'none';
+maintBlock.querySelectorAll('input').forEach(i=>{ i.checked = false; });
+maintPreview.textContent = '';
+return;
+}
+maintBlock.style.display = 'block';
+maintLabel.textContent = 'Manutenção: ' + maintSvc.name;
+const choice = selectedMaint();
+let texto = 'Escolha em quantos dias será a manutenção.';
+let aviso = false;
+if(choice === '0'){
+texto = 'A manutenção não será marcada agora.';
+} else if(choice && apptDateInput.value){
+const iso = addDaysISO(apptDateInput.value, parseInt(choice, 10));
+const h = holidayOf(iso);
+texto = weekdayName(iso) + ', ' + formatDateBR(iso) + (apptTimeInput.value ? ' às ' + apptTimeInput.value : '');
+if(h){ texto += ' (' + holidayKind(h) + ': ' + h.name + ')'; aviso = true; }
+} else if(choice){
+texto = 'Informe a data da marcação para ver o dia da manutenção.';
+}
+maintPreview.textContent = texto;
+maintPreview.classList.toggle('warn', aviso);
+}
+function refreshDateInfo(){ updateDateNotice(); updateMaintBlock(); }
+apptServiceSelect.addEventListener('change', updateMaintBlock);
+apptTimeInput.addEventListener('input', updateMaintBlock);
+maintBlock.addEventListener('change', updateMaintBlock);
 
 const apptDateInput = document.getElementById('apptDate');      // guarda a data em formato ISO (aaaa-mm-dd)
 const apptDateText = document.getElementById('apptDateText');   // o que a pessoa vê e digita: dd/mm/aaaa
@@ -562,12 +723,14 @@ const apptDateText = document.getElementById('apptDateText');   // o que a pesso
 function setApptDate(iso){
 apptDateInput.value = iso || '';
 apptDateText.value = iso ? formatDateBR(iso) : '';
+refreshDateInfo();
 }
 setApptDate(todayISO());
 
 // escolheu pelo calendário
 apptDateInput.addEventListener('change', ()=>{
 apptDateText.value = apptDateInput.value ? formatDateBR(apptDateInput.value) : '';
+refreshDateInfo();
 });
 apptDateInput.addEventListener('click', ()=>{
 try{ apptDateInput.showPicker(); }catch(e){ /* navegador sem showPicker: o toque nativo já abre */ }
@@ -587,6 +750,7 @@ if(yy >= 2000 && dt.getFullYear()===yy && dt.getMonth()===mm-1 && dt.getDate()==
 apptDateInput.value = yy + '-' + String(mm).padStart(2,'0') + '-' + String(dd).padStart(2,'0');
 }
 }
+refreshDateInfo();
 });
 
 apptForm.addEventListener('submit', async (e)=>{
@@ -601,29 +765,56 @@ apptDateText.focus();
 return;
 }
 const selectedService = state.services.find(s=>s.id===apptServiceSelect.value);
+const clientName = document.getElementById('apptClient').value.trim();
+const clientPhone = document.getElementById('apptPhone').value.trim();
+const timeVal = apptTimeInput.value;
+
+// 1) o dia da marcação é feriado?
+const hol = holidayOf(apptDateInput.value);
+if(hol && !confirm(`${formatDateBR(apptDateInput.value)} é ${holidayKind(hol)} (${hol.name}).\n\nMarcar a cliente mesmo assim?`)) return;
+
+// 2) o serviço tem manutenção? então ela precisa escolher o prazo
+const maintSvc = selectedService && selectedService.maintenanceId ? state.services.find(s=>s.id===selectedService.maintenanceId) : null;
+const maintChoice = selectedMaint();
+if(maintSvc && !maintChoice){
+toast('Escolha quando será a manutenção (ou "Não marcar agora").');
+maintBlock.scrollIntoView({ behavior:'smooth', block:'center' });
+return;
+}
+let maintAppt = null;
+if(maintSvc && maintChoice && maintChoice !== '0'){
+const mDate = addDaysISO(apptDateInput.value, parseInt(maintChoice, 10));
+const mh = holidayOf(mDate);
+if(mh && !confirm(`A manutenção cairia em ${formatDateBR(mDate)}, que é ${holidayKind(mh)} (${mh.name}).\n\nMarcar mesmo assim? (Cancele para escolher outro prazo.)`)) return;
+maintAppt = { id: uid(), client: clientName, phone: clientPhone, serviceId: maintSvc.id, service: maintSvc.name, date: mDate, time: timeVal };
+}
+
 const appt = {
 id: uid(),
-client: document.getElementById('apptClient').value.trim(),
-phone: document.getElementById('apptPhone').value.trim(),
+client: clientName,
+phone: clientPhone,
 serviceId: apptServiceSelect.value,
 service: selectedService ? selectedService.name : '',
 date: apptDateInput.value,
-time: document.getElementById('apptTime').value,
+time: timeVal,
 };
-state.appointments.push(appt);
+const novas = maintAppt ? [appt, maintAppt] : [appt];
+novas.forEach(a => state.appointments.push(a));
 await saveData();
 
-// Envia para o backend cuidar do lembrete automático de WhatsApp
+// Envia para o backend cuidar do lembrete automático de WhatsApp (uma chamada por marcação)
+novas.forEach(a => {
 fetch(API_URL + '/api/appointments', {
 method: 'POST',
 headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify(appt)
+body: JSON.stringify(a)
 }).catch(err => console.error('Não sincronizou com o servidor de lembretes:', err));
+});
 
 apptForm.reset();
 setApptDate(todayISO());
 populateServiceSelect();
-toast('Marcação confirmada!');
+toast(maintAppt ? `Marcação e manutenção (${formatDateBR(maintAppt.date)}) confirmadas!` : 'Marcação confirmada!');
 
 // leva para a agenda do dia marcado
 selectedDate = appt.date;
@@ -645,6 +836,7 @@ const calTitle = document.getElementById('calTitle');
 const agendaList = document.getElementById('agendaList');
 const dayDetailTitle = document.getElementById('dayDetailTitle');
 const dayDetailHint = document.getElementById('dayDetailHint');
+const dayHolidayNote = document.getElementById('dayHolidayNote');
 
 let selectedDate = todayISO();
 let viewYear = parseInt(selectedDate.slice(0,4), 10);
@@ -701,6 +893,8 @@ const list = byDate[iso] || [];
 const classes = ['cal-day'];
 if(iso === today) classes.push('today');
 if(iso === selectedDate) classes.push('selected');
+const hol = holidayOf(iso);
+if(hol) classes.push('holiday', hol.tipo === 'facultativo' ? 'optional' : 'official');
 
 const chips = list.slice(0,2).map(a=>{
 return `<div class="cal-chip"><span class="t">${escapeHtml(a.time)}</span><span class="n">${escapeHtml(a.client)}</span><span class="s">${escapeHtml(a.service || '')}</span></div>`;
@@ -708,7 +902,9 @@ return `<div class="cal-chip"><span class="t">${escapeHtml(a.time)}</span><span 
 const more = list.length > 2 ? `<div class="cal-more">+${list.length-2} mais</div>` : '';
 const dots = list.length ? `<span class="cal-dots">${list.length}</span>` : '';
 
-html += `<button type="button" class="${classes.join(' ')}" data-date="${iso}"><span class="cal-num">${d}</span>${chips}${more}${dots}</button>`;
+const holLabel = hol ? `<span class="cal-holiday">${escapeHtml(hol.name)}</span>` : '';
+const holTitle = hol ? ` title="${escapeHtml(holidayKind(hol).charAt(0).toUpperCase() + holidayKind(hol).slice(1) + ': ' + hol.name)}"` : '';
+html += `<button type="button" class="${classes.join(' ')}" data-date="${iso}"${holTitle}><span class="cal-num">${d}</span>${holLabel}${chips}${more}${dots}</button>`;
 }
 calGrid.innerHTML = html;
 }
@@ -717,6 +913,12 @@ function renderDayDetail(){
 const [y,m,d] = selectedDate.split('-').map(Number);
 const weekday = WEEKDAYS[new Date(y, m-1, d).getDay()];
 dayDetailTitle.textContent = weekday.charAt(0).toUpperCase() + weekday.slice(1) + ', ' + formatDateBR(selectedDate);
+
+const dh = holidayOf(selectedDate);
+dayHolidayNote.style.display = dh ? 'block' : 'none';
+if(dh) dayHolidayNote.textContent = dh.tipo === 'feriado'
+? `Feriado nacional: ${dh.name}. Evite marcar clientes neste dia.`
+: `Ponto facultativo: ${dh.name}. Confirme se vai atender neste dia.`;
 
 const dayAppts = state.appointments
 .filter(a=>a.date===selectedDate)
@@ -870,9 +1072,10 @@ try{ localStorage.setItem(THEME_KEY, next); }catch(e){ /* sem armazenamento: val
 await loadData();
 if(state.services.length===0){
 // serviços de exemplo para começar
+const idAlongamento = uid(), idManutencao = uid();
 state.services = [
-{ id: uid(), name:'Manicure', duration:60, price:45 },
-{ id: uid(), name:'Escova', duration:50, price:60 },
+{ id: idAlongamento, name:'Alongamento de cílios', duration:150, price:150, maintenanceId: idManutencao },
+{ id: idManutencao, name:'Manutenção de cílios', duration:75, price:90 },
 { id: uid(), name:'Design de sobrancelhas', duration:30, price:35 },
 ];
 await saveData();
